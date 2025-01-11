@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String          @id @default(cuid())
+  name          String          @unique
+  status        String          @default("offline")
+  statusMessage String          @default("")
+  profileImage  String?         @default("https://avatar.vercel.sh/default.png")
+  messages      Message[]       @relation("UserMessages")
+  reactions     Reaction[]      @relation("UserReactions")
+  threadMessages ThreadMessage[] @relation("UserThreadMessages")
+}
+
+model Channel {
+  id       String    @id @default(cuid())
+  name     String    @unique
+  messages Message[] @relation("ChannelMessages")
+}
+
+model Message {
+  id        String     @id @default(cuid())
+  content   String
+  timestamp DateTime   @default(now())
+  userId    String
+  user      User       @relation("UserMessages", fields: [userId], references: [id])
+  channelId String?
+  channel   Channel?   @relation("ChannelMessages", fields: [channelId], references: [id])
+  avatarId  String?
+  reactions Reaction[] @relation("MessageReactions")
+  thread    Thread?    @relation("MessageThread")
+  file      File?      @relation("MessageFile")
+}
+
+model Thread {
+  id        String          @id @default(cuid())
+  messageId String          @unique
+  message   Message         @relation("MessageThread", fields: [messageId], references: [id])
+  replies   ThreadMessage[] @relation("ThreadReplies")
+}
+
+model ThreadMessage {
+  id        String   @id @default(cuid())
+  content   String
+  timestamp DateTime @default(now())
+  userId    String
+  user      User     @relation("UserThreadMessages", fields: [userId], references: [id])
+  threadId  String
+  thread    Thread   @relation("ThreadReplies", fields: [threadId], references: [id])
+  file      File?    @relation("ThreadMessageFile")
+}
+
+model Reaction {
+  id        String  @id @default(cuid())
+  emoji     String
+  messageId String
+  message   Message @relation("MessageReactions", fields: [messageId], references: [id])
+  userId    String
+  user      User    @relation("UserReactions", fields: [userId], references: [id])
+
+  @@unique([messageId, userId, emoji])
+}
+
+model File {
+  id              String         @id @default(cuid())
+  name            String
+  type            String
+  url             String        @db.Text  // Use Text type for large strings
+  messageId       String?        @unique
+  message         Message?       @relation("MessageFile", fields: [messageId], references: [id])
+  threadMessageId String?        @unique
+  threadMessage   ThreadMessage? @relation("ThreadMessageFile", fields: [threadMessageId], references: [id])
+}
