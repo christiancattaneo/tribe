@@ -3,6 +3,8 @@ import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
@@ -23,7 +25,7 @@ export async function GET(
       // Create response with proper headers
       const response = new NextResponse(buffer)
       response.headers.set('Content-Type', file.type)
-      response.headers.set('Content-Disposition', `attachment; filename="${file.name}"`)
+      response.headers.set('Content-Disposition', `inline; filename="${file.name}"`)
       response.headers.set('Cache-Control', 'public, max-age=31536000') // Cache for 1 year
       
       return response

@@ -1,11 +1,9 @@
 import { NextResponse } from 'next/server'
-import { writeFile, mkdir } from 'fs/promises'
-import { join } from 'path'
-import { cwd } from 'process'
-import { existsSync } from 'fs'
 import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
+
+export const dynamic = 'force-dynamic'
 
 export async function POST(request: Request) {
   try {
@@ -20,26 +18,16 @@ export async function POST(request: Request) {
     const filename = formData.get('filename') as string || 'uploaded-file'
     const mimeType = file.type || 'application/octet-stream'
     
-    // Create a unique filename
-    const timestamp = Date.now()
-    const uniqueFilename = `${timestamp}-${filename}`
+    // Check file size (5MB limit)
+    const MAX_FILE_SIZE = 5 * 1024 * 1024
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json({ error: 'File size exceeds 5MB limit' }, { status: 400 })
+    }
     
-    // Convert file to buffer and then to base64
+    // Convert file to base64
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
     const base64Data = buffer.toString('base64')
-    
-    // Ensure uploads directory exists
-    const publicDir = join(cwd(), 'public')
-    const uploadsDir = join(publicDir, 'uploads')
-    
-    if (!existsSync(uploadsDir)) {
-      await mkdir(uploadsDir, { recursive: true })
-    }
-    
-    // Save to public directory
-    const filePath = join(uploadsDir, uniqueFilename)
-    await writeFile(filePath, buffer)
     
     // Create file record in database
     try {
