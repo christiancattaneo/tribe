@@ -54,7 +54,7 @@ export async function GET(request: Request) {
         id: message.file.id,
         name: message.file.name,
         type: message.file.type,
-        url: `/api/files/${message.file.id}`
+        url: message.file.url
       } : undefined,
     }))
 
@@ -121,7 +121,7 @@ export async function POST(request: Request) {
         id: message.file.id,
         name: message.file.name,
         type: message.file.type,
-        url: message.file.url // Use Blob Storage URL directly
+        url: message.file.url
       } : undefined,
     })
   } catch (error) {
