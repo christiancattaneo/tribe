@@ -219,10 +219,11 @@ export default function SlackInterface() {
           throw new Error(error.details || 'Failed to upload file')
         }
         
-        const { fileUrl } = await uploadResponse.json()
+        const { fileUrl, fileId } = await uploadResponse.json()
         
         // Create file data structure
         fileData = {
+          id: fileId,
           name: file.name,
           type: file.type,
           url: fileUrl

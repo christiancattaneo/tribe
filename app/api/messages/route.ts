@@ -82,20 +82,12 @@ export async function POST(request: Request) {
 
     let fileData
     if (file) {
-      // Add file size validation (5MB limit)
-      const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
-      if (file.size > MAX_FILE_SIZE) {
-        return NextResponse.json({ 
-          error: 'File size exceeds limit',
-          details: 'Maximum file size is 5MB'
-        }, { status: 400 })
-      }
-
       fileData = {
         create: {
+          id: file.id,
           name: file.name,
           type: file.type,
-          url: file.url // Already base64 from frontend
+          url: file.url // Blob Storage URL
         }
       }
     }
@@ -129,7 +121,7 @@ export async function POST(request: Request) {
         id: message.file.id,
         name: message.file.name,
         type: message.file.type,
-        url: `/api/files/${message.file.id}`
+        url: message.file.url // Use Blob Storage URL directly
       } : undefined,
     })
   } catch (error) {
