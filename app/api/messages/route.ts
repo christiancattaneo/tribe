@@ -74,7 +74,16 @@ export async function GET(request: Request) {
 // POST /api/messages
 export async function POST(request: Request) {
   try {
-    const { content, userId, channelId, avatarId, file } = await request.json()
+    const body = await request.json()
+    const { content, userId, channelId, avatarId, file } = body
+    
+    console.log('Creating message with data:', {
+      content,
+      userId,
+      channelId,
+      avatarId,
+      hasFile: !!file
+    })
 
     if (!userId || (!channelId && !avatarId)) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -82,12 +91,27 @@ export async function POST(request: Request) {
 
     let fileData
     if (file) {
+      console.log('Processing file data:', {
+        fileId: file.id,
+        fileName: file.name,
+        fileType: file.type
+      })
+      
+      // First verify the file exists in the database
+      const existingFile = await prisma.file.findUnique({
+        where: { id: file.id }
+      })
+      
+      if (!existingFile) {
+        console.error('File not found in database:', file.id)
+        return NextResponse.json({ error: 'File not found' }, { status: 404 })
+      }
+      
+      console.log('Found existing file:', existingFile)
+      
       fileData = {
-        create: {
-          id: file.id,
-          name: file.name,
-          type: file.type,
-          url: file.url // Blob Storage URL
+        connect: {
+          id: file.id
         }
       }
     }
@@ -101,6 +125,8 @@ export async function POST(request: Request) {
       ...(fileData ? { file: fileData } : {}),
     }
 
+    console.log('Creating message with data:', messageData)
+
     const message = await prisma.message.create({
       data: messageData,
       include: {
@@ -108,6 +134,8 @@ export async function POST(request: Request) {
         file: true,
       },
     })
+
+    console.log('Message created successfully:', message)
 
     return NextResponse.json({
       id: message.id,
