@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
+import { put } from '@vercel/blob'
 
 const prisma = new PrismaClient()
 
@@ -24,29 +25,29 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'File size exceeds 5MB limit' }, { status: 400 })
     }
     
-    // Convert file to data URL
-    const bytes = await file.arrayBuffer()
-    const buffer = Buffer.from(bytes)
-    const base64Data = buffer.toString('base64')
-    const dataUrl = `data:${mimeType};base64,${base64Data}`
-    
-    // Create file record in database
+    // Upload file to Vercel Blob Storage
     try {
+      const blob = await put(filename, file, {
+        access: 'public',
+        contentType: mimeType
+      })
+
+      // Create file record in database with blob URL
       const fileRecord = await prisma.file.create({
         data: {
           name: filename,
           type: mimeType,
-          url: dataUrl
+          url: blob.url
         }
       })
       
       return NextResponse.json({ 
-        fileUrl: `/api/files/${fileRecord.id}`,
+        fileUrl: blob.url,
         fileId: fileRecord.id
       })
-    } catch (dbError) {
-      console.error('Database error:', dbError)
-      throw dbError
+    } catch (uploadError) {
+      console.error('Failed to upload to Blob Storage:', uploadError)
+      throw uploadError
     }
   } catch (error) {
     console.error('Failed to upload file:', error)
