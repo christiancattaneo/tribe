@@ -532,52 +532,51 @@ export default function SlackInterface() {
           />
         ) : currentUser ? (
           <div className="flex-1 flex">
-            {!selectedThread ? (
-              <ChannelView
-                channel={selectedChannel ? channels.find(c => c.id === selectedChannel)?.name || '' : ''}
-                directMessageUser={selectedDirectMessage ? users.find(u => u.name === selectedDirectMessage) || null : null}
-                avatarChat={selectedAvatar}
-                setSelectedThread={(messageId) => {
-                  if (!messageId) {
-                    setSelectedThread(null);
-                    return;
-                  }
-                  const message = [...Object.values(channelMessages).flat(), ...Object.values(dmMessages).flat()]
-                    .find(m => m.id === messageId)
-                  if (message) {
-                    setSelectedThread({
-                      id: messageId,
-                      messageId: messageId,
-                      messages: [{
-                        id: messageId,
-                        user: message.user,
-                        content: message.content,
-                        timestamp: message.timestamp,
-                        file: message.file,
-                      }],
-                    })
-                  }
-                }}
-                messages={
-                  selectedChannel
-                    ? channelMessages[selectedChannel] || []
-                    : selectedDirectMessage
-                      ? (() => {
-                          const dmUser = users.find(u => u.name === selectedDirectMessage)
-                          if (!dmUser) return []
-                          const dmPairId = `${[currentUser.id, dmUser.id].sort()[0]}_${[currentUser.id, dmUser.id].sort()[1]}`
-                          return dmMessages[dmPairId] || []
-                        })()
-                      : selectedAvatar
-                        ? dmMessages[`avatar_${selectedAvatar}_${currentUser.id}`] || []
-                        : []
+            <ChannelView
+              channel={selectedChannel ? channels.find(c => c.id === selectedChannel)?.name || '' : ''}
+              directMessageUser={selectedDirectMessage ? users.find(u => u.name === selectedDirectMessage) || null : null}
+              avatarChat={selectedAvatar}
+              setSelectedThread={(messageId) => {
+                if (!messageId) {
+                  setSelectedThread(null);
+                  return;
                 }
-                onSendMessage={handleSendMessage}
-                onReaction={handleReaction}
-                currentUser={currentUser}
-                onSearch={handleSearch}
-              />
-            ) : (
+                const message = [...Object.values(channelMessages).flat(), ...Object.values(dmMessages).flat()]
+                  .find(m => m.id === messageId)
+                if (message) {
+                  setSelectedThread({
+                    id: messageId,
+                    messageId: messageId,
+                    messages: [{
+                      id: messageId,
+                      user: message.user,
+                      content: message.content,
+                      timestamp: message.timestamp,
+                      file: message.file,
+                    }],
+                  })
+                }
+              }}
+              messages={
+                selectedChannel
+                  ? channelMessages[selectedChannel] || []
+                  : selectedDirectMessage
+                    ? (() => {
+                        const dmUser = users.find(u => u.name === selectedDirectMessage)
+                        if (!dmUser) return []
+                        const dmPairId = `${[currentUser.id, dmUser.id].sort()[0]}_${[currentUser.id, dmUser.id].sort()[1]}`
+                        return dmMessages[dmPairId] || []
+                      })()
+                    : selectedAvatar
+                      ? dmMessages[`avatar_${selectedAvatar}_${currentUser.id}`] || []
+                      : []
+              }
+              onSendMessage={handleSendMessage}
+              onReaction={handleReaction}
+              currentUser={currentUser}
+              onSearch={handleSearch}
+            />
+            {selectedThread && (
               <ThreadView
                 thread={selectedThread}
                 onClose={() => setSelectedThread(null)}

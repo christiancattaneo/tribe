@@ -3,10 +3,10 @@ import { useState } from 'react'
 
 interface FileMessageProps {
   file: {
-    id: string
-    name: string
-    type: string
-    url: string
+    id?: string;
+    name: string;
+    type: string;
+    url: string;
   }
 }
 

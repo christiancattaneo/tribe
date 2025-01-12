@@ -15,6 +15,13 @@ interface ThreadViewProps {
   currentUser: User;
 }
 
+interface FileType {
+  id: string;
+  name: string;
+  type: string;
+  url: string;
+}
+
 export default function ThreadView({ thread, onClose, onSendReply, currentUser }: ThreadViewProps) {
   const [newReply, setNewReply] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -35,7 +42,7 @@ export default function ThreadView({ thread, onClose, onSendReply, currentUser }
   }
 
   return (
-    <div className="w-96 border-l border-gray-700 flex flex-col h-[90vh]">
+    <div className="w-96 border-l border-gray-700 flex flex-col h-full bg-background">
       <div className="p-4 border-b border-gray-700 flex justify-between items-center flex-shrink-0">
         <h2 className="text-xl font-semibold">Thread</h2>
         <Button variant="ghost" size="icon" onClick={onClose}>
