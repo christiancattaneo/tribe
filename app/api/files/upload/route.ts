@@ -8,38 +8,46 @@ export const dynamic = 'force-dynamic'
 export async function POST(request: Request) {
   try {
     const formData = await request.formData()
-    const file = formData.get('file') as File
+    const file = formData.get('file')
     
-    if (!file) {
-      return NextResponse.json({ error: 'No file provided' }, { status: 400 })
+    if (!file || !(file instanceof Blob)) {
+      return NextResponse.json({ error: 'No valid file provided' }, { status: 400 })
     }
 
+    // Get file details
+    const filename = formData.get('filename') as string || 'uploaded-file'
+    const mimeType = file.type || 'application/octet-stream'
+    
     // Check file size (5MB limit)
-    if (file.size > 5 * 1024 * 1024) {
-      return NextResponse.json({ 
-        error: 'File too large',
-        details: 'Maximum file size is 5MB'
-      }, { status: 400 })
+    const MAX_FILE_SIZE = 5 * 1024 * 1024
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json({ error: 'File size exceeds 5MB limit' }, { status: 400 })
     }
-
+    
     // Convert file to data URL
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
-    const dataUrl = `data:${file.type};base64,${buffer.toString('base64')}`
-
+    const base64Data = buffer.toString('base64')
+    const dataUrl = `data:${mimeType};base64,${base64Data}`
+    
     // Create file record in database
-    const fileRecord = await prisma.file.create({
-      data: {
-        name: file.name,
-        type: file.type,
-        url: dataUrl
-      }
-    })
-
-    return NextResponse.json({
-      fileId: fileRecord.id,
-      fileUrl: fileRecord.url
-    })
+    try {
+      const fileRecord = await prisma.file.create({
+        data: {
+          name: filename,
+          type: mimeType,
+          url: dataUrl
+        }
+      })
+      
+      return NextResponse.json({ 
+        fileUrl: `/api/files/${fileRecord.id}`,
+        fileId: fileRecord.id
+      })
+    } catch (dbError) {
+      console.error('Database error:', dbError)
+      throw dbError
+    }
   } catch (error) {
     console.error('Failed to upload file:', error)
     return NextResponse.json({ 
